@@ -1,15 +1,14 @@
-import { Meeting, CalendarEvent, sequelize } from "@/models";
+import { Op } from "sequelize";
+import { Meeting, CalendarEvent } from "@/models";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
   try {
-    await sequelize.sync();
-
     const meetings = await Meeting.findAll({
       include: [{ model: CalendarEvent }],
       where: {
-        endTime: { [sequelize.Op.lt]: new Date() }, // only past meetings
+        endTime: { [Op.lt]: new Date() }, // only past meetings
       },
       order: [["createdAt", "DESC"]],
     });

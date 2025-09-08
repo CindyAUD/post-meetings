@@ -35,6 +35,14 @@ export const Automation = sequelize.define("Automation", {
   config: DataTypes.JSON,
 });
 
+// Example ScheduledPost model
+export const ScheduledPost = sequelize.define("ScheduledPost", {
+  id: { type: DataTypes.STRING, primaryKey: true },
+  platform: DataTypes.STRING,
+  text: DataTypes.TEXT,
+  scheduledAt: DataTypes.DATE,
+});
+
 // Relationships
 User.hasMany(Account);
 Account.belongsTo(User);
@@ -48,8 +56,19 @@ Meeting.belongsTo(CalendarEvent);
 User.hasMany(Automation);
 Automation.belongsTo(User);
 
+User.hasMany(ScheduledPost);
+ScheduledPost.belongsTo(User);
+
 // Centralized DB object
-const db = { sequelize, User, Account, CalendarEvent, Meeting, Automation };
+export const db = {
+  sequelize,
+  User,
+  Account,
+  CalendarEvent,
+  Meeting,
+  Automation,
+  ScheduledPost,
+};
 
 // DB initializer
 export async function initDb() {

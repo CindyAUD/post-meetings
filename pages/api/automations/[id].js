@@ -1,26 +1,20 @@
-import { db } from "@/models";
+// pages/api/automations/[id].js
+//import { db } from "@/models";
+import { db } from "@/lib/db";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(req, res) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) return res.status(401).json({ error: "Unauthorized" });
+
   const { id } = req.query;
+  const userId = session.user.email;
 
-  try {
-    if (req.method === "DELETE") {
-      await db.Automation.destroy({ where: { id } });
-      return res.json({ success: true });
-    }
-
-    if (req.method === "PUT") {
-      const { config } = req.body;
-      const automation = await db.Automation.update(
-        { config },
-        { where: { id }, returning: true }
-      );
-      return res.json(automation);
-    }
-
-    res.status(405).end(); // method not allowed
-  } catch (err) {
-    console.error("❌ Automation handler error:", err);
-    res.status(500).json({ error: "Internal server error" });
+  if (req.method === "DELETE") {
+    await db.automation.destroy({ where: { id, userId } });
+    return res.json({ success: true });
   }
+
+  return res.status(405).end();
 }

@@ -1,28 +1,25 @@
-import { db } from "@/models";
+import db from "@/models";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).end();
+  const { meetingId } = req.body;
 
   try {
-    const { meetingId, transcript } = req.body;
-
-    // Save transcript
     const meeting = await db.Meeting.findByPk(meetingId);
-    if (meeting) {
-      meeting.transcript = transcript;
-      await meeting.save();
-    }
+    if (!meeting) return res.status(404).end();
 
-    // Run automations if any are enabled
-    const automations = await db.Automation.findAll();
+    // fetch automations for this user
+    const automations = await db.Automation.findAll({
+      where: { UserId: meeting.UserId },
+    });
+
     for (const a of automations) {
-      if (a.config.autoGenerate) {
+      if (a.config?.autoGenerate) {
         await fetch(`${process.env.NEXTAUTH_URL}/api/generate-content`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            meetingId,
-            type: a.platform,
+            meetingId: meeting.id,
+            type: a.platform, // e.g. "linkedin"
           }),
         });
       }
@@ -30,7 +27,7 @@ export default async function handler(req, res) {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Recall status error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ recall/status automation failed", err);
+    res.status(500).json({ error: "Automation trigger failed" });
   }
 }

@@ -1,25 +1,40 @@
-import { db } from "@/models";
+// pages/api/automations/index.js
+//import { db } from "@/models";
+import { db } from "@/lib/db";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(req, res) {
-  try {
-    if (req.method === "GET") {
-      const automations = await db.Automation.findAll();
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) return res.status(401).json({ error: "Unauthorized" });
+
+  const userId = session.user.email;
+
+  switch (req.method) {
+    case "GET": {
+      const automations = await db.automation.findAll({ where: { userId } });
       return res.json(automations);
     }
 
-    if (req.method === "POST") {
-      const { platform, config } = req.body;
-      const automation = await db.Automation.create({
-        id: Date.now().toString(),
-        platform,
-        config,
+    case "POST": {
+      const { platform, type } = req.body;
+      if (!platform || !type) {
+        return res.status(400).json({ error: "Platform and type are required" });
+      }
+
+      const automation = await db.automation.create({
+        data: {
+          id: Date.now().toString(),
+          userId,
+          platform,
+          type,
+        },
       });
+
       return res.json(automation);
     }
 
-    res.status(405).end();
-  } catch (err) {
-    console.error("❌ Automations error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    default:
+      return res.status(405).end();
   }
 }

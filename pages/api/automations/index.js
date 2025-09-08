@@ -1,6 +1,6 @@
 // pages/api/automations/index.js
-//import { db } from "@/models";
-import { db } from "@/lib/db";
+import { db } from "@/models";
+//import { db } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 
